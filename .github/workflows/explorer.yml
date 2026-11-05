@@ -1,0 +1,48 @@
+# Ejemplo: correr el agente explorer en CI de forma manual (workflow_dispatch).
+# El agente genera tests y abre un PR; una persona lo revisa y hace merge.
+name: explorer-agent
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "URL a explorar"
+        required: true
+        default: "https://www.saucedemo.com"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  explore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: pip install -r requirements.txt && playwright install --with-deps chromium
+      - run: npm install -g @anthropic-ai/claude-code
+      - name: Ejecutar agente explorer (modo no interactivo)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          claude -p "Usa el subagente explorer sobre ${{ inputs.url }}" \
+            --permission-mode acceptEdits \
+            --max-turns 40
+      - name: Abrir PR con los tests generados
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "qa-explorer-bot"
+          git config user.email "qa-explorer-bot@users.noreply.github.com"
+          git checkout -b explorer/${{ github.run_id }}
+          git add web .env.example
+          git diff --cached --quiet && exit 0
+          git commit -m "test: casos generados por el agente explorer"
+          git push -u origin HEAD
+          gh pr create --fill --base main
