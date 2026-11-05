@@ -28,10 +28,13 @@ class InventoryPage(BasePage):
 
     def product_names(self) -> list[str]:
         """Nombres de los productos en el orden en que se muestran."""
+        # all_inner_texts() no espera: sin esto podría devolver [] si el catálogo aún no cargó.
+        self.item_names.first.wait_for(state="visible")
         return self.item_names.all_inner_texts()
 
     def product_prices(self) -> list[float]:
         """Precios de los productos en el orden en que se muestran ('$29.99' -> 29.99)."""
+        self.item_prices.first.wait_for(state="visible")
         return [float(p.strip().lstrip("$")) for p in self.item_prices.all_inner_texts()]
 
     def sort_by(self, option: str):
