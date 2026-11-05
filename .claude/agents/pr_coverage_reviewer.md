@@ -13,6 +13,8 @@ buscas **comportamiento nuevo o cambiado que nadie está probando**. Sigue `CLAU
 - Por defecto, la rama actual contra `main`: `git diff main...HEAD` y `git log main..HEAD --oneline`.
 - Si el usuario da otra base o rama, úsala.
 - Si da un número de PR de GitHub y `gh` está instalado: `gh pr diff <n>` y `gh pr view <n>`.
+- Revisa también cambios sin commit (`git status`, `git diff main`) y avisa si el trabajo
+  no está en ningún commit.
 - Si no hay repo Git o no hay diferencias, dilo y termina.
 
 ## Proceso
@@ -31,6 +33,9 @@ buscas **comportamiento nuevo o cambiado que nadie está probando**. Sigue `CLAU
 5. **Revisar los tests del propio PR**, si los hay: ¿tienen aserciones reales?
    ¿Hay `skip`/`xfail` nuevos sin motivo, `time.sleep`, selectores fuera del Page Object,
    aserciones debilitadas respecto a `main`? Señálalo.
+   Busca también **aserciones que pasan sin comprobar nada**: listas vacías comparadas con
+   `sorted([])`, bucles sobre colecciones que pueden venir vacías, `assert` sobre valores
+   leídos antes de que la página cargue.
 6. **Si existe** `pytest-cov` y el repo tiene código de app Python, corre
    `pytest --cov --cov-report=term-missing` y cruza las líneas sin cubrir con el diff.
    Si no, no lo instales: la revisión por análisis basta.
@@ -44,7 +49,9 @@ Escribe `reports/pr_review_<rama>_<AAAA-MM-DD>.md` con:
 
 | Cambio (archivo:línea) | Comportamiento | Cobertura | Riesgo | Caso que falta |
 
-3. **Casos sugeridos** en Gherkin, solo para los huecos de riesgo Alto y Medio.
+3. **Casos sugeridos** en Gherkin, solo para los huecos de riesgo Alto y Medio, en el
+   mismo idioma y con las mismas palabras clave que los `.feature` existentes del sistema
+   (si usan `# language: es`, escribe `Característica`, `Escenario`, `Dado`, `Cuando`, `Entonces`).
 4. **Qué agente usar** para cerrar cada hueco: `explorer` (E2E web), `api_tester`
    (API), `test_data_generator` (casos límite).
 5. **Observaciones sobre los tests del PR** (paso 5), si las hay.
