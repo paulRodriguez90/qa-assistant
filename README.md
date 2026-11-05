@@ -4,8 +4,8 @@ Framework de agentes de QA construido sobre **Claude Code**. Cada agente es un a
 markdown con un rol y una lista de herramientas; el código de tests que generan sigue
 Pytest + Playwright con Page Object Model.
 
-Primer agente disponible: **explorer**, que navega una web con Playwright MCP, propone
-casos en Gherkin y genera los tests.
+Hay 6 agentes de QA: crear tests E2E y de API, reparar tests rotos, analizar fallos,
+generar datos de prueba y revisar la cobertura de un PR. Ver [Agentes disponibles](#4-agentes-disponibles).
 
 ---
 
@@ -19,8 +19,13 @@ qa-assistant/
 ├── .mcp.json                  # Herramientas externas (Playwright MCP). Se declaran una vez.
 ├── .claude/
 │   ├── settings.json          # Permisos: qué puede y qué no puede hacer Claude.
-│   └── agents/
-│       └── explorer.md        # Un agente = un archivo. Encabezado + instrucciones.
+│   └── agents/                # Un agente = un archivo. Encabezado + instrucciones.
+│       ├── explorer.md
+│       ├── self_healing.md
+│       ├── api_tester.md
+│       ├── ci_failure_analyzer.md
+│       ├── test_data_generator.md
+│       └── pr_coverage_reviewer.md
 ├── conftest.py                # Común: solo carga .env
 ├── web/                       # Pruebas E2E de navegador
 │   ├── CLAUDE.md              # Reglas web (POM, selectores, Playwright)
@@ -33,7 +38,9 @@ qa-assistant/
 │           └── e2e/           # Tests Pytest + Playwright
 ├── api/CLAUDE.md              # Reglas para pruebas de API
 ├── mobile/CLAUDE.md           # Reglas para pruebas mobile
-├── .github/workflows/         # Cómo correr el agente en CI
+├── .github/workflows/
+│   ├── tests.yml              # Smoke de saucedemo en cada PR y push a main
+│   └── explorer.yml           # Cómo correr el agente explorer en CI
 └── .env.example               # Plantilla de variables. El .env real no se sube.
 ```
 
@@ -82,6 +89,11 @@ Page Objects y tests nuevos dentro de `web/<sitio>/`; revisa el diff y corre `py
 
 ### En CI
 
+`.github/workflows/tests.yml` corre en cada PR y en cada push a `main`: instala las
+dependencias y Chromium y ejecuta `pytest web/saucedemo -m smoke`. Si algún test falla,
+sube los screenshots y traces de `test-results/` como artifact del run (se guardan 14 días).
+Para ver un trace descargado: `playwright show-trace <ruta>/trace.zip`.
+
 El mismo agente corre sin interfaz con `claude -p "..."`. El workflow
 `.github/workflows/explorer.yml` lo lanza a mano con una URL, y al final abre un PR con
 los tests generados. En Jenkins o GitLab es igual: un paso que instala Claude Code, define
@@ -115,11 +127,19 @@ pytest --headed     # viendo el navegador
 > Nota: `.mcp.json` usa `@playwright/mcp@latest` para empezar rápido. En un proyecto real
 > fija una versión concreta para que el agente no cambie de comportamiento sin aviso.
 
-## 4. Próximos agentes
+## 4. Agentes disponibles
 
-- `ci_failure_analyzer`: lee logs de CI y reportes de Pytest/Allure, separa flaky de bugs reales.
-- `api_tester`: genera tests de API desde un OpenAPI o colección de Postman.
-- `self_healing`: detecta selectores rotos y propone el arreglo en un PR.
+Se invocan en lenguaje natural desde Claude Code, nombrando el agente. Ninguno hace
+commit, push ni merge: dejan los cambios para que una persona los revise.
+
+| Agente | Para qué sirve | Ejemplo de pedido |
+|---|---|---|
+| `explorer` | Explora una web con Playwright MCP, propone casos en Gherkin y genera tests Pytest + Playwright con Page Object Model. | `Usa explorer sobre https://www.saucedemo.com y cubre el flujo de carrito` |
+| `self_healing` | Repara tests E2E rotos por cambios de UI ("locator not found", timeouts, "strict mode violation"): mira la página real y corrige el Page Object. | `Usa self_healing para revisar que los selectores de web/saucedemo/pages/login_page.py sigan funcionando` |
+| `api_tester` | Genera tests de API desde un OpenAPI/Swagger, una colección de Postman o una URL: camino feliz, contrato, negativos y seguridad básica. | `Usa api_tester sobre https://petstore3.swagger.io/api/v3/openapi.json. Servicio petstore, solo el recurso pet y solo GET` |
+| `ci_failure_analyzer` | Analiza fallos de Pytest (consola, junit XML, logs de CI), separa flaky, bugs reales y errores del test, y redacta los tickets. | `Usa ci_failure_analyzer sobre pytest api/petstore` |
+| `test_data_generator` | Genera datos de prueba sintéticos y casos límite como factories Python o JSON/CSV, listos para parametrizar tests. | `Usa test_data_generator para web/saucedemo: datos del checkout (nombre, apellido, código postal) con casos límite, en un test parametrizado` |
+| `pr_coverage_reviewer` | Revisa el diff de un PR o rama: qué cambios no tienen tests, su riesgo, qué casos faltan y si está listo para merge. | `Usa pr_coverage_reviewer sobre esta rama` |
 
 La app de ejemplo es [Sauce Demo](https://www.saucedemo.com), una tienda pública para
 practicar automatización.

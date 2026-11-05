@@ -1,0 +1,48 @@
+# Smoke de web/saucedemo en cada PR y en cada push a main.
+# Si algo falla, sube los screenshots y traces de test-results/ como artifact.
+name: tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Un push nuevo al mismo PR o rama cancela la ejecución anterior.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke-saucedemo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Instalar Chromium
+        run: playwright install --with-deps chromium
+
+      # pytest.ini ya activa --screenshot only-on-failure y --tracing retain-on-failure;
+      # pytest-playwright los guarda en test-results/.
+      - name: Correr smoke de saucedemo
+        run: pytest web/saucedemo -m smoke --output test-results
+
+      - name: Subir screenshots y traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14
