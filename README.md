@@ -4,8 +4,8 @@ Framework de agentes de QA construido sobre **Claude Code**. Cada agente es un a
 markdown con un rol y una lista de herramientas; el código de tests que generan sigue
 Pytest + Playwright con Page Object Model.
 
-Hay 6 agentes de QA: crear tests E2E y de API, reparar tests rotos, analizar fallos,
-generar datos de prueba y revisar la cobertura de un PR. Ver [Agentes disponibles](#4-agentes-disponibles).
+Hay 7 agentes de QA: crear tests E2E y de API, reparar tests rotos, analizar fallos,
+generar datos de prueba, revisar la cobertura de un PR y analizar una app por dentro para encontrar bugs (`app_recon`). Ver [Agentes disponibles](#4-agentes-disponibles).
 
 ---
 
@@ -140,6 +140,7 @@ commit, push ni merge: dejan los cambios para que una persona los revise.
 | `ci_failure_analyzer` | Analiza fallos de Pytest (consola, junit XML, logs de CI), separa flaky, bugs reales y errores del test, y redacta los tickets. | `Usa ci_failure_analyzer sobre pytest api/petstore` |
 | `test_data_generator` | Genera datos de prueba sintéticos y casos límite como factories Python o JSON/CSV, listos para parametrizar tests. | `Usa test_data_generator para web/saucedemo: datos del checkout (nombre, apellido, código postal) con casos límite, en un test parametrizado` |
 | `pr_coverage_reviewer` | Revisa el diff de un PR o rama: qué cambios no tienen tests, su riesgo, qué casos faltan y si está listo para merge. | `Usa pr_coverage_reviewer sobre esta rama` |
+| `app_recon` | Analiza una app propia o autorizada (APK, web o API) con MobSF, apktool, jadx, logcat y el tráfico de los tests, para encontrar bugs y huecos de cobertura. No clona la app. Reglas en `recon/CLAUDE.md`. | `Usa app_recon sobre mobile/<app>: el APK está en <APP>_APP_PATH, es nuestra y corre en el emulador` |
 
 La app de ejemplo es [Sauce Demo](https://www.saucedemo.com), una tienda pública para
 practicar automatización.
