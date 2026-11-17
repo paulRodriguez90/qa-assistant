@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from recon.findings import Finding, write_findings
-from recon.mobile import layouts, logcat_summary, mobsf_scan
+from recon.mobile import layouts, logcat_summary, manifest, mobsf_scan
 from recon.web import har_summary
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -84,10 +84,45 @@ def test_mobsf_summary_filtra_info_y_no_copia_secretos():
 def test_layouts_detecta_botones_sin_descripcion():
     """Un ImageButton sin contentDescription es un hallazgo; uno con descripción o decorativo no."""
     findings, resumen = layouts.analyze(FIXTURES / "apktool")
-    assert _ids(findings) == {"a11y:activity_cart:btn_delete"}
+    assert _ids(findings) == {"a11y:activity_cart:btn_delete", "a11y:item_rating:ImageView#1",
+                              "a11y:item_rating:ImageView#2"}
     pantalla = resumen["pantallas"]["activity_cart"]
     assert "btn_checkout" in pantalla["ids"]
     assert pantalla["content_desc"] == ["Volver"]
+
+
+@pytest.mark.regression
+def test_layouts_junta_variantes_del_mismo_layout():
+    """layout/ y layout-v22/ del mismo archivo dan un solo hallazgo con las dos variantes."""
+    findings, _ = layouts.analyze(FIXTURES / "apktool")
+    borrar = next(f for f in findings if f.id == "a11y:activity_cart:btn_delete")
+    assert borrar.extra["variantes"] == ["layout", "layout-v22"]
+
+
+@pytest.mark.regression
+def test_layouts_omite_layouts_de_librerias():
+    """Los layouts de AndroidX/Material (abc_, mtrl_...) se omiten salvo que se pidan."""
+    findings, resumen = layouts.analyze(FIXTURES / "apktool")
+    assert "abc_action_bar" not in resumen["pantallas"]
+    assert resumen["omitidos_de_librerias"] == 1
+    con_librerias, _ = layouts.analyze(FIXTURES / "apktool", incluir_librerias=True)
+    assert "a11y:abc_action_bar:abc_home" in _ids(con_librerias)
+
+
+@pytest.mark.smoke
+def test_manifest_detecta_debuggable_backup_y_exportados():
+    """Sin MobSF, el manifiesto de apktool alcanza para ver debuggable, backup y exportados sin permiso."""
+    findings, resumen = manifest.analyze(FIXTURES / "apktool")
+    ids = _ids(findings)
+    assert {"manifest:debuggable", "manifest:allowBackup", "manifest:cleartext"} <= ids
+    assert "exportado:com.ejemplo.app.DeepLinkActivity" in ids
+    assert "exportado:com.ejemplo.app.PushReceiver" in ids  # intent-filter sin exported explícito
+    assert "exportado:com.ejemplo.app.DataProvider" in ids
+    assert "exportado:com.ejemplo.app.MainActivity" not in ids  # launcher
+    assert "exportado:com.ejemplo.app.SyncService" not in ids  # protegido con permiso
+    debug = next(f for f in findings if f.id == "manifest:componentes-debug")
+    assert debug.extra["componentes"] == ["com.ejemplo.app.debug.DebugCrashActivity"]
+    assert resumen["permisos"] == ["android.permission.CAMERA"]
 
 
 @pytest.mark.smoke

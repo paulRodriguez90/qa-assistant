@@ -29,27 +29,35 @@ cuando un hallazgo concreto lo pida.
 
 1. **Estático con MobSF** (Docker corriendo, `MOBSF_API_KEY` en el entorno):
    `python -m recon.mobile.mobsf_scan <apk> --sistema <sistema>`
-2. **Pantallas y accesibilidad con apktool**:
-   `apktool d <apk> -o recon/out/<sistema>/apktool -f` y luego
+   Si no hay Docker/MobSF, sigue con los pasos 2 y 3: cubren lo básico del manifiesto.
+2. **Decodificar con apktool**: `apktool d <apk> -o recon/out/<sistema>/apktool -f`.
+   En Windows, si lo llamas desde un script, usa `java -jar <ruta>\apktool.jar d ...`:
+   `apktool.bat` termina con `pause` y se queda esperando una tecla.
+3. **Manifiesto**: `python -m recon.mobile.manifest recon/out/<sistema>/apktool --sistema <sistema>`
+   (debuggable, allowBackup, texto plano, componentes exportados sin permiso, pantallas de debug).
+   Un componente exportado se confirma abriéndolo con `adb shell am start -n <paquete>/<clase>`.
+4. **Pantallas y accesibilidad**:
    `python -m recon.mobile.layouts recon/out/<sistema>/apktool --sistema <sistema>`.
-   El inventario de ids alimenta los Screen Objects; compáralo con `mobile/<sistema>/screens/`
-   para ver pantallas sin cobertura.
-3. **Dinámico con los tests de Appium**: limpia y vuelca logcat alrededor de la suite.
+   Omite los layouts de AndroidX/Material (`--incluir-librerias` para verlos). El inventario de
+   ids alimenta los Screen Objects; compáralo con `mobile/<sistema>/screens/` para ver
+   pantallas sin cobertura.
+5. **Dinámico con los tests de Appium**: limpia y vuelca logcat alrededor de la suite.
    ```
    adb logcat -c
    pytest mobile/<sistema>
    adb logcat -d -v threadtime > recon/out/<sistema>/logcat.txt
    python -m recon.mobile.logcat_summary recon/out/<sistema>/logcat.txt --paquete <paquete> --sistema <sistema>
    ```
-   Un crash o ANR aquí es un bug **visto**: la prioridad más alta.
-4. **Tráfico de la app (opcional)**: con el emulador apuntando al proxy y el certificado de
+   Un crash o ANR aquí es un bug **visto**: la prioridad más alta. Un test que falla o un
+   `xfail` que se sigue reproduciendo también es un bug visto: inclúyelo en el reporte.
+6. **Tráfico de la app (opcional)**: con el emulador apuntando al proxy y el certificado de
    mitmproxy instalado, `mitmdump -p 8080 --set hardump=recon/out/<sistema>/mobile.har`
    mientras corre la suite; luego
    `python -m recon.web.har_summary recon/out/<sistema>/mobile.har --sistema <sistema>`.
-5. **Profundizar un hallazgo con jadx**, solo si hace falta:
+7. **Profundizar un hallazgo con jadx**, solo si hace falta:
    `jadx -d recon/out/<sistema>/jadx <apk>` una vez, y después `Grep` sobre la clase o el
    método que nombra el hallazgo (por ejemplo el frame de un crash). Lee solo ese archivo.
-6. **Frida/objection**: solo sobre builds de debug propios y si el usuario lo pide.
+8. **Frida/objection**: solo sobre builds de debug propios y si el usuario lo pide.
 
 ## Proceso para web
 1. Graba el tráfico y los errores de consola de los tests E2E existentes:

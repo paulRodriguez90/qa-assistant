@@ -18,7 +18,8 @@ recon/
 │   └── har_summary.py     # HAR -> web_findings.json
 ├── mobile/
 │   ├── mobsf_scan.py      # APK -> MobSF -> mobile_findings.json
-│   ├── layouts.py         # salida de apktool -> layout_findings.json
+│   ├── manifest.py        # AndroidManifest de apktool -> manifest_findings.json (sin MobSF)
+│   ├── layouts.py         # salida de apktool -> layout_findings.json (omite librerías)
 │   └── logcat_summary.py  # logcat -> logcat_findings.json (crashes, ANR)
 ├── tests/                 # tests de los scripts, sin red ni dispositivo
 └── out/<sistema>/         # salidas. En .gitignore, nunca se versiona
