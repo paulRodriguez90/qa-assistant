@@ -9,6 +9,7 @@ de prueba. Las reglas específicas están en el `CLAUDE.md` de cada carpeta:
 | `web/`    | E2E de navegador (Playwright) | `web/CLAUDE.md` |
 | `api/`    | API REST/HTTP  | `api/CLAUDE.md`   |
 | `mobile/` | Apps móviles   | `mobile/CLAUDE.md`|
+| `recon/`  | Análisis estático y dinámico para encontrar bugs | `recon/CLAUDE.md` |
 
 ## Estructura
 - Cada sistema bajo prueba vive en su propia carpeta: `<tipo>/<nombre>/`

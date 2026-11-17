@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.ejemplo.app">
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <application android:debuggable="true" android:allowBackup="true" android:usesCleartextTraffic="true">
+        <activity android:name=".MainActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <activity android:name="com.ejemplo.app.DeepLinkActivity" android:exported="true"/>
+        <activity android:name=".debug.DebugCrashActivity" android:exported="false"/>
+        <service android:name=".SyncService" android:exported="true" android:permission="com.ejemplo.app.SYNC"/>
+        <receiver android:name=".PushReceiver">
+            <intent-filter><action android:name="com.ejemplo.PUSH"/></intent-filter>
+        </receiver>
+        <provider android:name=".DataProvider" android:authorities="com.ejemplo.data" android:exported="true"/>
+    </application>
+</manifest>

@@ -1,0 +1,21 @@
+{
+  "app_name": "Ejemplo", "package_name": "com.ejemplo.app", "version_name": "1.2.0",
+  "min_sdk": "24", "target_sdk": "34", "activities": ["a", "b"],
+  "exported_count": {"exported_activities": 1},
+  "appsec": {"security_score": 52},
+  "permissions": {
+    "android.permission.CAMERA": {"status": "dangerous", "description": "camara"},
+    "android.permission.INTERNET": {"status": "normal", "description": "red"}
+  },
+  "manifest_analysis": {"manifest_findings": [
+    {"rule": "app_allowbackup", "title": "allowBackup habilitado", "severity": "warning", "description": "Se puede respaldar la app por adb.", "component": []},
+    {"rule": "exported_activity", "title": "Activity exportada", "severity": "high", "description": "Sin permiso.", "component": ["com.ejemplo.app.DeepLinkActivity"]},
+    {"rule": "info_rule", "title": "solo info", "severity": "info", "description": "x", "component": []}
+  ]},
+  "code_analysis": {"findings": {
+    "android_logging": {"files": {"a/B.java": "1", "a/C.java": "2"}, "metadata": {"severity": "info", "description": "Logs"}},
+    "android_insecure_random": {"files": {"a/D.java": "3"}, "metadata": {"severity": "warning", "description": "Random inseguro", "cwe": "CWE-330"}}
+  }},
+  "network_security": {"network_findings": [{"scope": ["*"], "severity": "high", "description": "Permite tráfico en texto plano"}]},
+  "secrets": ["\"api_key\" : \"no-es-real-123\""]
+}
